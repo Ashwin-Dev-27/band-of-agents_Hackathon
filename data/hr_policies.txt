@@ -1,0 +1,73 @@
+ACME CORP — HR POLICIES KNOWLEDGE BASE
+=======================================
+
+1. EQUIPMENT POLICY
+───────────────────
+- All new hires receive a company laptop within 3 business days of start date
+- Remote employees receive a home office allowance of $500 (first year only)
+- Engineers (Software, Data, DevOps) receive: laptop + dual monitors + mechanical keyboard
+- Non-engineers receive: laptop + single monitor
+- Equipment requests must be submitted via IT ticket system 1 week before start date
+
+2. SYSTEM ACCESS POLICY
+────────────────────────
+- Corporate email (Google Workspace) must be created on Day 1 before 9 AM
+- Slack workspace access granted on Day 1
+- Role-specific tools granted within 2 business days
+- Admin/elevated access requires: manager approval + security team review (5-day process)
+- All access follows principle of least privilege
+
+3. LEGAL & COMPLIANCE
+──────────────────────
+- NDA must be signed BEFORE first day of employment
+- Background check must be completed and cleared before Day 1
+- All employees must complete mandatory compliance training within 30 days
+- Data privacy training required within 14 days
+- Security awareness training required within 7 days
+
+4. BENEFITS ENROLLMENT
+───────────────────────
+- Health insurance: enrollment window is 30 days from start date
+- Dental & Vision: same 30-day window
+- 401k enrollment: available immediately, employer matches up to 4%
+- Life insurance: automatic enrollment Day 1
+- PTO accrual: begins from Day 1 (15 days/year for first 2 years)
+
+5. ONBOARDING TIMELINE
+───────────────────────
+Week 1 (Days 1-5):
+  - IT setup and account creation
+  - HR orientation (benefits, policies, culture)
+  - Meet with direct manager
+  - Team introductions
+
+Week 2-4 (Days 6-30):
+  - Department-specific onboarding
+  - Complete all mandatory training
+  - Begin role-specific work with mentor/buddy
+  - Benefits enrollment deadline
+
+Day 30: Benefits enrollment deadline
+Day 90: First performance check-in with manager
+Day 180: 6-month review
+
+6. REMOTE WORK POLICY
+──────────────────────
+- Hybrid roles: minimum 2 days/week in office
+- Remote roles: quarterly in-person team sessions (travel covered)
+- Home office ergonomics assessment provided for fully remote employees
+- VPN required for all remote access to internal systems
+
+7. PROBATION PERIOD
+────────────────────
+- Standard probation period: 90 days
+- During probation: monthly check-ins with manager
+- Confirmation of employment after successful 90-day review
+- Benefits active from Day 1 regardless of probation status
+
+8. EMERGENCY CONTACTS & ESCALATION
+────────────────────────────────────
+- HR queries: hr@acmecorp.com
+- IT support: itsupport@acmecorp.com (tickets via portal)
+- Manager escalations: through Band rooms or direct manager contact
+- Legal/compliance questions: legal@acmecorp.com
