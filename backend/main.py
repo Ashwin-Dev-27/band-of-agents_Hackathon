@@ -14,8 +14,10 @@ LIVE MODE (Jun 11+):
   - All coordinated via Band/Thenvoi rooms
 """
 import os
+import json
 import asyncio
 import uuid
+from contextlib import asynccontextmanager
 from typing import Optional
 from datetime import datetime, date
 from dotenv import load_dotenv
@@ -28,10 +30,20 @@ load_dotenv()
 
 DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() != "false"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    mode = "DEMO MODE — smart mock responses active" if DEMO_MODE else "LIVE MODE — real LLMs active"
+    logger.info(f"Band of Agents HR Onboarding System — {mode}")
+    logger.success("Server ready ✓  http://localhost:8000")
+    yield
+
+
 app = FastAPI(
     title="Band of Agents — HR Onboarding System",
     description="Multi-agent HR onboarding system using Band as the coordination layer",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -42,8 +54,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory session store (replace with DB for production)
-sessions: dict[str, dict] = {}
+# JSON file session store for persistence
+SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "sessions.json")
+
+def load_sessions() -> dict:
+    if os.path.exists(SESSIONS_FILE):
+        try:
+            with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading sessions: {e}")
+    return {}
+
+def save_sessions():
+    try:
+        os.makedirs(os.path.dirname(SESSIONS_FILE), exist_ok=True)
+        with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(sessions, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving sessions: {e}")
+
+sessions: dict[str, dict] = load_sessions()
 
 # WebSocket connections for live dashboard updates
 websocket_clients: list[WebSocket] = []
@@ -92,8 +123,18 @@ class ApprovalRequest(BaseModel):
     notes: Optional[str] = ""
 
 
+class SettingsRequest(BaseModel):
+    DEMO_MODE: bool
+    BAND_API_KEY: str
+    AIML_API_KEY: str
+    FEATHERLESS_API_KEY: str
+
+
 # ─── WebSocket Broadcaster ────────────────────────────────────────────────────
 async def broadcast(message: dict):
+    if message.get("type") in ["new_session", "session_update"]:
+        save_sessions()
+
     dead = []
     for ws in websocket_clients:
         try:
@@ -123,6 +164,48 @@ async def health():
         "demo_mode": DEMO_MODE,
         "agents": ["Planner (LangGraph)", "HR Policy (CrewAI)", "IT Provisioning (LangGraph)", "Manager Review (PydanticAI)"],
     }
+
+
+@app.post("/api/settings")
+async def update_settings(request: SettingsRequest):
+    env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
+    lines = []
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            
+    updates = {
+        "DEMO_MODE": str(request.DEMO_MODE).lower(),
+        "BAND_API_KEY": request.BAND_API_KEY,
+        "AIML_API_KEY": request.AIML_API_KEY,
+        "FEATHERLESS_API_KEY": request.FEATHERLESS_API_KEY,
+    }
+    
+    # Auto-detect PRIMARY_LLM_PROVIDER based on provided keys
+    if request.AIML_API_KEY and not request.FEATHERLESS_API_KEY:
+        updates["PRIMARY_LLM_PROVIDER"] = "aimlapi"
+    elif request.FEATHERLESS_API_KEY:
+        updates["PRIMARY_LLM_PROVIDER"] = "featherless"
+        
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            new_lines.append(line.rstrip("\n"))
+            continue
+        key = stripped.split("=")[0].strip()
+        if key in updates:
+            new_lines.append(f"{key}={updates.pop(key)}")
+        else:
+            new_lines.append(line.rstrip("\n"))
+            
+    for k, v in updates.items():
+        new_lines.append(f"{k}={v}")
+        
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.write("\n".join(new_lines) + "\n")
+        
+    return {"status": "success", "message": "Settings updated."}
 
 
 @app.post("/api/onboard")

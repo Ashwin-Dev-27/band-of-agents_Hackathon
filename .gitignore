@@ -41,3 +41,6 @@ logs/
 
 # Agent memory (internal use only — don't push)
 _agent_memory/
+
+# Database / state
+data/sessions.json

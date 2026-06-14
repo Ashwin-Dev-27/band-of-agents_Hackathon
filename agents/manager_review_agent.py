@@ -66,6 +66,7 @@ async def run_manager_review(
     logger.info(f"[Manager Review] Starting final review for {employee_info.get('name')}")
 
     client = BandClient("Manager Review Agent")
+    await client.connect()
 
     # ── Step 1: Announce review start ─────────────────────────────────────────
     await client.send_message(

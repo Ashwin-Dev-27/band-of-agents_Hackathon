@@ -36,7 +36,7 @@ def generate_it_checklist(state: ITProvisioningState) -> ITProvisioningState:
     info = state["employee_info"]
     name = info.get('name', info.get('first_name', 'New Hire'))
     if 'name' not in info:
-        info['name'] = f"{info.get('first_name','')} {info.get('last_name','')".strip()}
+        info['name'] = f"{info.get('first_name','')} {info.get('last_name','')}".strip()
     logger.info(f"[IT Provisioning] Generating IT checklist for {name}")
 
     provider = os.getenv("PRIMARY_LLM_PROVIDER", "featherless")
@@ -138,6 +138,7 @@ async def send_to_band(state: ITProvisioningState) -> ITProvisioningState:
         return state
 
     client = BandClient("IT Provisioning Agent")
+    await client.connect()
     checklist = state["it_checklist"]
     info = state["employee_info"]
 

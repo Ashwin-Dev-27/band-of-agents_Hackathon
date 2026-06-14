@@ -132,6 +132,7 @@ async def handoff_to_band(state: PlannerState) -> PlannerState:
         return state
 
     client = BandClient("Planner Agent")
+    await client.connect()
 
     message = (
         f"📋 ONBOARDING PLAN READY for {state['employee_info']['name']}\n\n"

@@ -55,6 +55,7 @@ async def run_hr_policy_agent(task_plan: list, employee_info: dict, room_id: str
     logger.info(f"[HR Policy Agent] Starting policy review for {employee_info.get('name')}")
 
     client = BandClient("HR Policy Agent")
+    await client.connect()
 
     # ── Step 1: Announce to Band room ─────────────────────────────────────────
     await client.send_message(

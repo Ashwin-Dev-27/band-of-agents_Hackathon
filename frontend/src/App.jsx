@@ -127,14 +127,49 @@ function frameworkColor(fw) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState('dashboard') // 'dashboard' | 'session' | 'new'
-  const [sessions, setSessions] = useState(MOCK_SESSIONS)
+  const [sessions, setSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
   const [wsConnected, setWsConnected] = useState(false)
   const [toasts, setToasts] = useState([])
   const [filter, setFilter] = useState('all')
   const wsRef = useRef(null)
+  const wsHandlerRef = useRef(null)  // ref so WS always calls the latest handler
 
-  // WebSocket connection
+  // ── addToast MUST be declared before handleWsMessage (it's a dependency) ──
+  const addToast = useCallback((text, type = 'info') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, text, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
+  }, [])
+
+  const handleWsMessage = useCallback((msg) => {
+    if (msg.type === 'init') {
+      if (msg.sessions && msg.sessions.length > 0) {
+        setSessions(msg.sessions)
+      }
+    }
+    if (msg.type === 'session_update') {
+      setSessions(prev => prev.map(s => s.room_id === msg.room_id ? { ...s, ...msg.data } : s))
+    }
+    if (msg.type === 'new_session') {
+      setSessions(prev => {
+        const exists = prev.some(s => s.room_id === msg.data.room_id)
+        if (exists) {
+          return prev.map(s => s.room_id === msg.data.room_id ? { ...s, ...msg.data } : s)
+        }
+        return [msg.data, ...prev]
+      })
+      addToast(`New onboarding started: ${msg.data.employee_name}`, 'info')
+    }
+    if (msg.type === 'approved') {
+      addToast(`${msg.employee_name} approved!`, 'success')
+    }
+  }, [addToast])
+
+  // Keep the ref in sync so WS onmessage always calls the latest handler
+  useEffect(() => { wsHandlerRef.current = handleWsMessage }, [handleWsMessage])
+
+  // WebSocket connection — uses ref so onmessage is never stale
   useEffect(() => {
     const connect = () => {
       try {
@@ -147,7 +182,7 @@ export default function App() {
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data)
-            handleWsMessage(msg)
+            wsHandlerRef.current?.(msg)
           } catch {}
         }
         wsRef.current = ws
@@ -159,48 +194,10 @@ export default function App() {
     return () => wsRef.current?.close()
   }, [])
 
-  const handleWsMessage = useCallback((msg) => {
-    if (msg.type === 'session_update') {
-      setSessions(prev => prev.map(s => s.room_id === msg.room_id ? { ...s, ...msg.data } : s))
-    }
-    if (msg.type === 'new_session') {
-      setSessions(prev => [msg.data, ...prev])
-      addToast(`New onboarding started: ${msg.data.employee_name}`, 'info')
-    }
-    if (msg.type === 'approved') {
-      addToast(`${msg.employee_name} approved!`, 'success')
-    }
-  }, [])
-
-  const addToast = useCallback((text, type = 'info') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, text, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
-  }, [])
-
   const handleNewOnboarding = async (formData) => {
-    const newSession = {
-      room_id: `room-${Date.now()}`,
-      employee_name: `${formData.first_name} ${formData.last_name}`,
-      department: formData.department,
-      role: formData.role,
-      status: 'running',
-      progress: 0,
-      start_time: new Date().toISOString(),
-      agents: [
-        { name: 'Planner', status: 'active', framework: 'LangGraph', output: 'Initializing...' },
-        { name: 'HR Policy', status: 'waiting', framework: 'CrewAI', output: '' },
-        { name: 'IT Provisioning', status: 'waiting', framework: 'LangGraph', output: '' },
-        { name: 'Manager Review', status: 'waiting', framework: 'PydanticAI', output: '' },
-      ],
-      messages: [],
-      report: null,
-    }
-    setSessions(prev => [newSession, ...prev])
-    addToast(`Onboarding started for ${newSession.employee_name}`, 'success')
     setView('dashboard')
 
-    // Try real API
+    // Try real API first — backend will send the real room_id via WebSocket
     try {
       const res = await fetch(`${API_URL}/onboard`, {
         method: 'POST',
@@ -208,9 +205,54 @@ export default function App() {
         body: JSON.stringify(formData),
       })
       if (!res.ok) throw new Error('API error')
+      const data = await res.json()
+      // Backend responded — WebSocket will push the real session shortly
+      // Add optimistic placeholder so UI responds immediately
+      const optimistic = {
+        room_id: data.room_id,
+        employee_name: `${formData.first_name} ${formData.last_name}`.trim(),
+        department: formData.department,
+        role: formData.role,
+        status: 'running',
+        progress: 0,
+        start_time: new Date().toISOString(),
+        agents: [
+          { name: 'Planner', status: 'active', framework: 'LangGraph', output: 'Initializing...' },
+          { name: 'HR Policy', status: 'waiting', framework: 'CrewAI', output: '' },
+          { name: 'IT Provisioning', status: 'waiting', framework: 'LangGraph', output: '' },
+          { name: 'Manager Review', status: 'waiting', framework: 'PydanticAI', output: '' },
+        ],
+        messages: [],
+        report: null,
+      }
+      setSessions(prev => {
+        const exists = prev.some(s => s.room_id === data.room_id)
+        return exists ? prev : [optimistic, ...prev]
+      })
+      addToast(`Onboarding started for ${optimistic.employee_name}`, 'success')
     } catch {
-      // Backend offline — simulate progress
-      simulateProgress(newSession.room_id)
+      // Backend offline — use local simulation
+      const localId = `local-${Date.now()}`
+      const newSession = {
+        room_id: localId,
+        employee_name: `${formData.first_name} ${formData.last_name}`.trim(),
+        department: formData.department,
+        role: formData.role,
+        status: 'running',
+        progress: 0,
+        start_time: new Date().toISOString(),
+        agents: [
+          { name: 'Planner', status: 'active', framework: 'LangGraph', output: 'Initializing...' },
+          { name: 'HR Policy', status: 'waiting', framework: 'CrewAI', output: '' },
+          { name: 'IT Provisioning', status: 'waiting', framework: 'LangGraph', output: '' },
+          { name: 'Manager Review', status: 'waiting', framework: 'PydanticAI', output: '' },
+        ],
+        messages: [],
+        report: null,
+      }
+      setSessions(prev => [newSession, ...prev])
+      addToast(`Onboarding started (offline mode)`, 'info')
+      simulateProgress(localId)
     }
   }
 
@@ -286,6 +328,15 @@ export default function App() {
             onCancel={() => setView('dashboard')}
           />
         )}
+        {view === 'settings' && (
+          <SettingsView
+            onSave={() => {
+              addToast('Settings saved successfully', 'success')
+              setView('dashboard')
+            }}
+            onCancel={() => setView('dashboard')}
+          />
+        )}
       </main>
       <ToastContainer toasts={toasts} />
     </div>
@@ -344,6 +395,17 @@ function Sidebar({ view, setView, wsConnected, sessions }) {
             <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
           New Onboarding
+        </button>
+        <button
+          id="nav-settings"
+          className={`sidebar-item ${view === 'settings' ? 'active' : ''}`}
+          onClick={() => setView('settings')}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Settings
         </button>
       </nav>
 
@@ -858,6 +920,114 @@ function NewOnboardingForm({ onSubmit, onCancel }) {
               <span>Band Platform</span>
             </div>
             <p>All agents coordinate through a shared Band room — a persistent messaging layer for real-time handoffs, approvals, and audit trails.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Settings View ────────────────────────────────────────────────────────────
+function SettingsView({ onSave, onCancel }) {
+  const [demoMode, setDemoMode] = useState(() => localStorage.getItem('DEMO_MODE') !== 'false')
+  const [bandKey, setBandKey] = useState(localStorage.getItem('BAND_API_KEY') || '')
+  const [aimlKey, setAimlKey] = useState(localStorage.getItem('AIML_API_KEY') || '')
+  const [featherlessKey, setFeatherlessKey] = useState(localStorage.getItem('FEATHERLESS_API_KEY') || '')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    localStorage.setItem('DEMO_MODE', demoMode)
+    localStorage.setItem('BAND_API_KEY', bandKey)
+    localStorage.setItem('AIML_API_KEY', aimlKey)
+    localStorage.setItem('FEATHERLESS_API_KEY', featherlessKey)
+    
+    try {
+      await fetch(`${API_URL}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          DEMO_MODE: demoMode,
+          BAND_API_KEY: bandKey,
+          AIML_API_KEY: aimlKey,
+          FEATHERLESS_API_KEY: featherlessKey
+        })
+      })
+    } catch (e) {
+      console.error('Failed to save settings to backend:', e)
+    }
+
+    setTimeout(() => { setSaving(false); onSave() }, 300)
+  }
+
+  return (
+    <div className="page animate-fade-in">
+      <div className="page-header">
+        <div>
+          <h1>Settings</h1>
+          <p>Configure API keys and system mode</p>
+        </div>
+        <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+      </div>
+      <div className="form-layout">
+        <form className="card form-card animate-fade-in-up" onSubmit={e => { e.preventDefault(); handleSave() }}>
+          <div className="form-section">
+            <h3 className="section-title">System Mode</h3>
+            <div className="form-group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="form-label">Demo Mode</div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                    Uses smart mock responses instead of real LLM calls
+                  </p>
+                </div>
+                <label className="toggle">
+                  <input type="checkbox" checked={demoMode} onChange={e => setDemoMode(e.target.checked)} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="divider" />
+
+          <div className="form-section">
+            <h3 className="section-title">API Keys</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Stored in browser localStorage. Restart required after changing.
+            </p>
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">Band API Key</label>
+              <input className="form-input" type="password" placeholder="band_u_..." value={bandKey} onChange={e => setBandKey(e.target.value)} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label className="form-label">AI/ML API Key</label>
+              <input className="form-input" type="password" placeholder="aiml_..." value={aimlKey} onChange={e => setAimlKey(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Featherless API Key</label>
+              <input className="form-input" type="password" placeholder="rc_..." value={featherlessKey} onChange={e => setFeatherlessKey(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+        </form>
+        <div className="pipeline-preview animate-fade-in-up delay-200">
+          <div className="card band-info-card" style={{ marginBottom: 16 }}>
+            <div className="band-logo-row">
+              <div className="band-dot"></div>
+              <span>Current Status</span>
+            </div>
+            <div className="stat-row"><span className="stat-label">Backend</span><span className="stat-val green">Ready</span></div>
+            <div className="stat-row"><span className="stat-label">Demo Mode</span><span className={`stat-val ${demoMode ? 'amber' : 'cyan'}`}>{demoMode ? 'ON' : 'OFF'}</span></div>
+            <div className="stat-row"><span className="stat-label">Band Key</span><span className={`stat-val ${bandKey ? 'green' : 'amber'}`}>{bandKey ? 'Set' : 'Missing'}</span></div>
+            <div className="stat-row"><span className="stat-label">AI/ML Key</span><span className={`stat-val ${aimlKey ? 'green' : 'amber'}`}>{aimlKey ? 'Set' : 'Missing'}</span></div>
+            <div className="stat-row"><span className="stat-label">Featherless</span><span className={`stat-val ${featherlessKey ? 'green' : 'amber'}`}>{featherlessKey ? 'Set' : 'Missing'}</span></div>
           </div>
         </div>
       </div>

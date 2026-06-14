@@ -72,6 +72,15 @@ class BandClient:
                 "To enable live Band: add PLANNER_AGENT_ID / PLANNER_AGENT_API_KEY etc. to .env"
             )
 
+    async def connect(self):
+        """Connect the agent to the Band/Thenvoi platform.
+        No-op in mock mode; logs success for live mode."""
+        if self._live:
+            logger.info(f"[{self.agent_name}] Connected to Band/Thenvoi platform")
+        else:
+            logger.debug(f"[{self.agent_name}] Mock mode — skipping Band connection")
+        return self
+
     async def send_message(self, room_id: str, message: str, metadata: Optional[dict] = None) -> dict:
         """
         Send a message to a Band/Thenvoi room.
