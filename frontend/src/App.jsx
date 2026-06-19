@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 
-const WS_URL = 'ws://localhost:8000/ws'
-const API_URL = 'http://localhost:8000/api'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const DEPARTMENTS = ['Engineering', 'Product', 'Design', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
 const ROLES = ['Software Engineer', 'Product Manager', 'UX Designer', 'Data Analyst', 'DevOps Engineer', 'Marketing Manager', 'Sales Representative', 'HR Specialist']
