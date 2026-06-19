@@ -2,6 +2,9 @@
 
 A multi-agent system for the [Band of Agents Hackathon](https://lablab.ai) where 4 specialized AI agents collaborate through Band to automate enterprise HR onboarding workflows.
 
+**Demo:** https://band-of-agents-hackathon-gfzj.vercel.app  
+**Repo:** https://github.com/Ashwin-Dev-27/band-of-agents_Hackathon
+
 ## Features
 
 - **Multi-Agent Orchestration** — Four agents (Planner, HR Policy, IT Provisioning, Manager Review) collaborate via Band rooms to process new hire onboarding end-to-end
