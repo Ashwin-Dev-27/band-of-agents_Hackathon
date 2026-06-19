@@ -17,7 +17,6 @@ from band_integration.band_client import BandClient
 load_dotenv()
 
 
-# ─── Pydantic Models ──────────────────────────────────────────────────────────
 class OnboardingReport(BaseModel):
     employee_name: str
     employee_role: str
@@ -51,7 +50,6 @@ class ApprovalDecision(BaseModel):
     approved_at: Optional[str] = None
 
 
-# ─── Manager Review Agent ──────────────────────────────────────────────────────
 async def run_manager_review(
     employee_info: dict,
     task_plan: list,

@@ -80,7 +80,6 @@ sessions: dict[str, dict] = load_sessions()
 websocket_clients: list[WebSocket] = []
 
 
-# ─── Request Models ───────────────────────────────────────────────────────────
 class NewHireRequest(BaseModel):
     first_name: str = ""
     last_name: str = ""
@@ -130,7 +129,6 @@ class SettingsRequest(BaseModel):
     FEATHERLESS_API_KEY: str
 
 
-# ─── WebSocket Broadcaster ────────────────────────────────────────────────────
 async def broadcast(message: dict):
     if message.get("type") in ["new_session", "session_update"]:
         save_sessions()
@@ -146,7 +144,6 @@ async def broadcast(message: dict):
             websocket_clients.remove(ws)
 
 
-# ─── Routes ──────────────────────────────────────────────────────────────────
 @app.get("/")
 async def root():
     return {
@@ -270,7 +267,6 @@ async def _run_pipeline(room_id: str, info: dict):
         await broadcast({"type": "error", "room_id": room_id, "error": str(e)})
 
 
-# ─── DEMO PIPELINE ────────────────────────────────────────────────────────────
 async def _run_demo_pipeline(room_id: str, info: dict):
     """Smart demo pipeline — realistic responses, zero API calls."""
     name = info["name"]
@@ -359,7 +355,6 @@ async def _run_demo_pipeline(room_id: str, info: dict):
     logger.success(f"[Demo] Pipeline complete for {room_id}. Awaiting approval.")
 
 
-# ─── LIVE PIPELINE (Jun 11+) ──────────────────────────────────────────────────
 async def _run_live_pipeline(room_id: str, info: dict):
     """Live pipeline with real LLM calls via Featherless/AIML."""
     try:
@@ -407,7 +402,6 @@ async def _run_live_pipeline(room_id: str, info: dict):
         raise
 
 
-# ─── Demo Data Generators ─────────────────────────────────────────────────────
 def _generate_demo_task_plan(info: dict) -> list:
     role = info.get("role", "Employee")
     dept = info.get("department", "General")
@@ -524,7 +518,6 @@ def _generate_demo_report(info: dict, task_plan: list, hr_review: dict, it_check
     }
 
 
-# ─── Approval Route ───────────────────────────────────────────────────────────
 @app.post("/api/approve")
 async def approve_onboarding(request: ApprovalRequest):
     """Human-in-the-loop: Manager approves or rejects the onboarding plan."""
@@ -560,7 +553,6 @@ async def approve_onboarding(request: ApprovalRequest):
     return {"status": "recorded", "decision": decision_str, "room_id": request.room_id}
 
 
-# ─── Session Routes ───────────────────────────────────────────────────────────
 @app.get("/api/rooms")
 async def get_rooms():
     return {"rooms": list(sessions.values()), "count": len(sessions)}
@@ -574,7 +566,6 @@ async def get_room(room_id: str):
     return session
 
 
-# ─── WebSocket ────────────────────────────────────────────────────────────────
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -600,7 +591,6 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("Dashboard WebSocket client disconnected")
 
 
-# ─── Startup ──────────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup():
     mode = "DEMO MODE — smart mock responses active (credits unlock Jun 11)" if DEMO_MODE else "LIVE MODE — real LLMs active"

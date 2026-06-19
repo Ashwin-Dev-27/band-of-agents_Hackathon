@@ -11,8 +11,6 @@ from loguru import logger
 
 load_dotenv()
 
-# ─── Agent Credentials Map ────────────────────────────────────────────────────
-# Each of the 4 agents needs its own ID + key from app.thenvoi.com
 AGENT_CREDENTIALS = {
     "Planner Agent": {
         "agent_id":  os.getenv("PLANNER_AGENT_ID", ""),
@@ -45,12 +43,6 @@ class BandClient:
     """
     Wrapper around the Band SDK (thenvoi) for agent communication.
     Gracefully degrades to mock/log mode when credentials aren't configured.
-
-    How to set up per-agent credentials:
-      1. Go to https://app.thenvoi.com
-      2. Create a workspace (if not already)
-      3. Go to Agents → Create Remote Agent (one per agent below)
-      4. Copy the agent UUID + API key into .env
     """
 
     def __init__(self, agent_name: str):
@@ -127,7 +119,6 @@ class BandClient:
         return self._live
 
 
-# ─── Shared room event log (picked up by room_manager for WS broadcast) ──────
 _room_events: dict[str, list] = {}
 
 

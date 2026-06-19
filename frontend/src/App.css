@@ -2,7 +2,6 @@
    App.css — Component Styles for OnboardAI Dashboard
    ============================================================ */
 
-/* ─── Layout ──────────────────────────────────────────────── */
 .app-layout {
   display: flex;
   min-height: 100vh;
@@ -15,7 +14,6 @@
   min-width: 0;
 }
 
-/* ─── Page ────────────────────────────────────────────────── */
 .page {
   padding: 32px 40px;
   max-width: 1200px;
@@ -34,7 +32,6 @@
   margin-bottom: 4px;
 }
 
-/* ─── Sidebar ─────────────────────────────────────────────── */
 .sidebar {
   width: 260px;
   flex-shrink: 0;
@@ -210,7 +207,6 @@
   background-clip: text;
 }
 
-/* ─── KPI Grid ────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -265,7 +261,6 @@
   letter-spacing: 0.06em;
 }
 
-/* ─── Pipeline Row ────────────────────────────────────────── */
 .pipeline-row {
   display: flex;
   align-items: center;
@@ -319,7 +314,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Sessions Section ────────────────────────────────────── */
 .sessions-section {
   margin-top: 8px;
 }
@@ -370,7 +364,6 @@
   color: white;
 }
 
-/* ─── Session List & Cards ────────────────────────────────── */
 .session-list {
   display: flex;
   flex-direction: column;
@@ -474,12 +467,10 @@
   color: var(--accent-purple-light);
 }
 
-/* ─── Session Progress Card ───────────────────────────────── */
 .session-progress-card {
   margin-bottom: 20px;
 }
 
-/* ─── Agent Pipeline (Detail) ─────────────────────────────── */
 .agent-pipeline {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -607,7 +598,6 @@
   50% { box-shadow: 0 0 25px rgba(6, 182, 212, 0.35); }
 }
 
-/* ─── Tab Bar ─────────────────────────────────────────────── */
 .tab-bar {
   display: flex;
   gap: 4px;
@@ -635,7 +625,6 @@
 .tab-btn:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
 .tab-btn.active { background: var(--gradient-primary); color: white; }
 
-/* ─── Chat Card ───────────────────────────────────────────── */
 .chat-card {
   padding: 0;
   overflow: hidden;
@@ -700,7 +689,6 @@
   line-height: 1.5;
 }
 
-/* ─── Report Grid ─────────────────────────────────────────── */
 .report-grid {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -803,7 +791,6 @@
   border-color: rgba(16, 185, 129, 0.25);
 }
 
-/* ─── Approval Card ───────────────────────────────────────── */
 .approval-card {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.03));
   border-color: rgba(245, 158, 11, 0.3);
@@ -831,7 +818,6 @@
   gap: 12px;
 }
 
-/* ─── Form Layout ─────────────────────────────────────────── */
 .form-layout {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -873,7 +859,6 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ─── Pipeline Preview ────────────────────────────────────── */
 .pipeline-preview {
   display: flex;
   flex-direction: column;
@@ -951,7 +936,6 @@
   box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
 }
 
-/* ─── Toast ───────────────────────────────────────────────── */
 .toast {
   display: flex;
   align-items: center;
@@ -965,7 +949,6 @@
 .toast-error   { border-color: rgba(239, 68, 68, 0.4); }
 .toast-info    { border-color: var(--border-accent); }
 
-/* ─── Empty State ─────────────────────────────────────────── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -981,7 +964,6 @@
   margin-bottom: 8px;
 }
 
-/* ─── Responsive ──────────────────────────────────────────── */
 @media (max-width: 1280px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .agent-pipeline { grid-template-columns: repeat(2, 1fr); }

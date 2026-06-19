@@ -20,7 +20,6 @@ from band_integration.band_client import BandClient
 load_dotenv()
 
 
-# ─── State Definition ─────────────────────────────────────────────────────────
 class ITProvisioningState(TypedDict):
     employee_info: dict
     task_plan: list
@@ -30,7 +29,6 @@ class ITProvisioningState(TypedDict):
     status: str
 
 
-# ─── LangGraph Nodes ──────────────────────────────────────────────────────────
 def generate_it_checklist(state: ITProvisioningState) -> ITProvisioningState:
     """Node 1: Generate IT provisioning checklist using LLM."""
     info = state["employee_info"]
@@ -169,7 +167,6 @@ async def send_to_band(state: ITProvisioningState) -> ITProvisioningState:
     return state
 
 
-# ─── Build the LangGraph ──────────────────────────────────────────────────────
 def build_it_graph():
     workflow = StateGraph(ITProvisioningState)
 
@@ -183,7 +180,6 @@ def build_it_graph():
     return workflow.compile()
 
 
-# ─── Agent Runner ─────────────────────────────────────────────────────────────
 async def run_it_provisioning(
     employee_info: dict, task_plan: list, hr_review: dict, room_id: str
 ) -> dict:

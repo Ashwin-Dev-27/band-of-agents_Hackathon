@@ -20,7 +20,6 @@ from band_integration.band_client import BandClient
 load_dotenv()
 
 
-# ─── LLM Factory ───────────────────────────────────────────────────────────────────
 def get_llm(model_env_var: str = "PLANNER_MODEL") -> ChatOpenAI:
     """
     Returns a ChatOpenAI-compatible client pointed at Featherless (primary, confirmed working)
@@ -46,7 +45,6 @@ def get_llm(model_env_var: str = "PLANNER_MODEL") -> ChatOpenAI:
 
 
 
-# ─── State Definition ───────────────────────────────────────────────────────────────────
 class PlannerState(TypedDict):
     employee_info: dict
     task_plan: list
@@ -55,7 +53,6 @@ class PlannerState(TypedDict):
     status: str
 
 
-# ─── LangGraph Nodes ───────────────────────────────────────────────────────────────────
 def parse_employee_info(state: PlannerState) -> PlannerState:
     """Node 1: Parse and validate new hire information."""
     info = state["employee_info"]
@@ -156,7 +153,6 @@ async def handoff_to_band(state: PlannerState) -> PlannerState:
     return state
 
 
-# ─── Build the LangGraph ──────────────────────────────────────────────────────
 def build_planner_graph():
     workflow = StateGraph(PlannerState)
 
@@ -172,7 +168,6 @@ def build_planner_graph():
     return workflow.compile(checkpointer=InMemorySaver())
 
 
-# ─── Agent Runner ─────────────────────────────────────────────────────────────
 async def run_planner(employee_info: dict, room_id: str) -> dict:
     """Entry point to run the Planner Agent."""
     graph = build_planner_graph()

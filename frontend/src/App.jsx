@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const WS_URL = 'ws://localhost:8000/ws'
 const API_URL = 'http://localhost:8000/api'
 
 const DEPARTMENTS = ['Engineering', 'Product', 'Design', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations']
 const ROLES = ['Software Engineer', 'Product Manager', 'UX Designer', 'Data Analyst', 'DevOps Engineer', 'Marketing Manager', 'Sales Representative', 'HR Specialist']
 
-// ─── Mock Data (used when backend is offline) ─────────────────────────────────
 const MOCK_SESSIONS = [
   {
     room_id: 'room-001',
@@ -90,7 +88,6 @@ const MOCK_SESSIONS = [
   }
 ]
 
-// ─── Utility Functions ────────────────────────────────────────────────────────
 function timeAgo(isoString) {
   const diff = (Date.now() - new Date(isoString)) / 1000
   if (diff < 60) return `${Math.floor(diff)}s ago`
@@ -124,7 +121,6 @@ function frameworkColor(fw) {
   return map[fw] || 'badge-gray'
 }
 
-// ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState('dashboard') // 'dashboard' | 'session' | 'new'
   const [sessions, setSessions] = useState([])
@@ -135,7 +131,6 @@ export default function App() {
   const wsRef = useRef(null)
   const wsHandlerRef = useRef(null)  // ref so WS always calls the latest handler
 
-  // ── addToast MUST be declared before handleWsMessage (it's a dependency) ──
   const addToast = useCallback((text, type = 'info') => {
     const id = Date.now()
     setToasts(prev => [...prev, { id, text, type }])
@@ -343,7 +338,6 @@ export default function App() {
   )
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
 function Sidebar({ view, setView, wsConnected, sessions }) {
   const pending = sessions.filter(s => s.status === 'pending_approval').length
   const running = sessions.filter(s => s.status === 'running').length
@@ -442,7 +436,6 @@ function Sidebar({ view, setView, wsConnected, sessions }) {
   )
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ sessions, allSessions, filter, setFilter, onSelect, onNew }) {
   const completed = allSessions.filter(s => s.status === 'completed').length
   const pending = allSessions.filter(s => s.status === 'pending_approval').length
@@ -531,7 +524,6 @@ function Dashboard({ sessions, allSessions, filter, setFilter, onSelect, onNew }
   )
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KPICard({ title, value, icon, color, delay }) {
   return (
     <div className={`kpi-card card animate-fade-in-up delay-${delay}`} data-color={color}>
@@ -542,7 +534,6 @@ function KPICard({ title, value, icon, color, delay }) {
   )
 }
 
-// ─── Session Card ─────────────────────────────────────────────────────────────
 function SessionCard({ session, onClick, delay }) {
   const sc = statusConfig(session.status)
   const initials = session.employee_name.split(' ').map(n => n[0]).join('')
@@ -584,7 +575,6 @@ function SessionCard({ session, onClick, delay }) {
   )
 }
 
-// ─── Session View ─────────────────────────────────────────────────────────────
 function SessionView({ session, onBack, onApprove }) {
   const sc = statusConfig(session.status)
   const [activeTab, setActiveTab] = useState('live')
@@ -785,7 +775,6 @@ function SessionView({ session, onBack, onApprove }) {
   )
 }
 
-// ─── New Onboarding Form ──────────────────────────────────────────────────────
 function NewOnboardingForm({ onSubmit, onCancel }) {
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', department: '', role: '',
@@ -927,7 +916,6 @@ function NewOnboardingForm({ onSubmit, onCancel }) {
   )
 }
 
-// ─── Settings View ────────────────────────────────────────────────────────────
 function SettingsView({ onSave, onCancel }) {
   const [demoMode, setDemoMode] = useState(() => localStorage.getItem('DEMO_MODE') !== 'false')
   const [bandKey, setBandKey] = useState(localStorage.getItem('BAND_API_KEY') || '')
@@ -1035,7 +1023,6 @@ function SettingsView({ onSave, onCancel }) {
   )
 }
 
-// ─── Toast Container ──────────────────────────────────────────────────────────
 function ToastContainer({ toasts }) {
   return (
     <div className="toast-container">

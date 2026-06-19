@@ -15,7 +15,6 @@ from band_integration.band_client import BandClient
 load_dotenv()
 
 
-# ─── Policy Knowledge Base ─────────────────────────────────────────────────────
 POLICY_KNOWLEDGE = """
 ACME Corp HR Policies:
 
