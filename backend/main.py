@@ -24,7 +24,6 @@ from dotenv import load_dotenv
 from loguru import logger
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv()
@@ -47,7 +46,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -593,13 +592,5 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("Dashboard WebSocket client disconnected")
 
 
-@app.on_event("startup")
-async def startup():
-    mode = "DEMO MODE — smart mock responses active (credits unlock Jun 11)" if DEMO_MODE else "LIVE MODE — real LLMs active"
-    logger.info(f"Band of Agents HR Onboarding System — {mode}")
-    logger.success("Server ready ✓  http://localhost:8000")
 
-frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-if os.path.isdir(frontend_dist):
-    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
-    logger.info(f"Serving frontend from {frontend_dist}")
+

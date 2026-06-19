@@ -46,3 +46,5 @@ data/sessions.json
 
 # Hackathon deliverables (local only)
 deliverables/
+
+.vercel
