@@ -53,7 +53,9 @@ python3.11 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install Python dependencies
-pip install -r requirements.txt
+pip install -r requirements.txt        # Demo mode (default): lightweight, no LLM libraries
+# For LIVE mode (real LLMs via LangGraph, CrewAI and PydanticAI), install the full set instead:
+# pip install -r requirements.prod.txt
 
 # Copy and fill in environment variables
 cp .env.example .env
