@@ -79,7 +79,10 @@ async def run_manager_review(
     # ── Step 2: Use PydanticAI to synthesize report ────────────────────────────
     try:
         from pydantic_ai import Agent
-        from pydantic_ai.models.openai import OpenAIModel
+        try:
+            from pydantic_ai.models.openai import OpenAIChatModel as OpenAIModel  # pydantic-ai >= 1.0
+        except ImportError:
+            from pydantic_ai.models.openai import OpenAIModel  # older pydantic-ai
         from pydantic_ai.providers.openai import OpenAIProvider
 
         provider = os.getenv("PRIMARY_LLM_PROVIDER", "featherless")
@@ -104,7 +107,7 @@ async def run_manager_review(
 
         review_agent = Agent(
             model=model,
-            result_type=OnboardingReport,
+            output_type=OnboardingReport,
             system_prompt="""You are a Senior HR Manager reviewing onboarding packages.
 Synthesize information from multiple agents into a comprehensive final report.
 Be thorough, identify risks, and provide clear priority actions.""",
@@ -121,7 +124,7 @@ IT CHECKLIST: {json.dumps(it_checklist)}
 Generate the complete OnboardingReport.
 """
         result = await review_agent.run(prompt)
-        report = result.data
+        report = result.output
 
     except Exception as e:
         logger.error(f"[Manager Review] PydanticAI error: {e}, using fallback")
